@@ -35,23 +35,41 @@ fn main() {
         return;
     };
 
-    let Some(first) = first_set.options.first() else {
-        return_error("dcql selection failed");
-        return;
-    };
-    let c = first.credential.clone();
-    let attributes = if first.claims_queries.is_empty() {
-        let cred_id = first_set.id.clone();
-        let Some(credentials) = query.credentials else {
-            return_error("Invalid query");
-            return;
-        };
-        credentials
-            .into_iter()
-            .filter(|a| a.id == cred_id)
-            .flat_map(|a| {
-                a.claims.unwrap_or(Vec::new()).into_iter().map(|a| {
-                    a.path
+    for option in &first_set.options {
+        let c = option.credential.clone();
+        let attributes = if option.claims_queries.is_empty() {
+            let cred_id = first_set.id.clone();
+            let Some(credentials) = &query.credentials else {
+                return_error("Invalid query");
+                return;
+            };
+            let credentials = credentials.clone();
+            credentials
+                .into_iter()
+                .filter(|a| a.id == cred_id)
+                .flat_map(|a| {
+                    a.claims.unwrap_or(Vec::new()).into_iter().map(|a| {
+                        a.path
+                            .clone()
+                            .into_iter()
+                            .map(|a| match a {
+                                dcql::models::PointerPart::String(a) => a,
+                                dcql::models::PointerPart::Index(i) => i.to_string(),
+                                dcql::models::PointerPart::Null(_) => String::from("[]"),
+                            })
+                            .collect::<Vec<_>>()
+                            .join(".")
+                    })
+                })
+                .collect()
+        } else {
+            option
+                .claims_queries
+                .clone()
+                .into_iter()
+                .map(|first_query| {
+                    first_query
+                        .path
                         .clone()
                         .into_iter()
                         .map(|a| match a {
@@ -62,27 +80,13 @@ fn main() {
                         .collect::<Vec<_>>()
                         .join(".")
                 })
-            })
-            .collect()
-    } else {
-        first
-            .claims_queries
-            .clone()
-            .into_iter()
-            .map(|first_query| {
-                first_query
-                    .path
-                    .clone()
-                    .into_iter()
-                    .map(|a| match a {
-                        dcql::models::PointerPart::String(a) => a,
-                        dcql::models::PointerPart::Index(i) => i.to_string(),
-                        dcql::models::PointerPart::Null(_) => String::from("[]"),
-                    })
-                    .collect::<Vec<_>>()
-                    .join(".")
-            })
-            .collect::<Vec<_>>()
-    };
-    select_credential(c, attributes, provider_index, &CMWalletDatabaseFormat);
+                .collect::<Vec<_>>()
+        };
+        select_credential(
+            c.clone(),
+            attributes.clone(),
+            provider_index,
+            &CMWalletDatabaseFormat,
+        );
+    }
 }
