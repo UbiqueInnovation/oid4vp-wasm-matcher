@@ -17,20 +17,13 @@ KIND, either express or implied.  See the License for the
 specific language governing permissions and limitations
 under the License.
  */
-use std::{collections::HashMap, ffi::CString};
+use std::{any::Any, ffi::CString};
 
 use base64::Engine;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use serde_json::{json, Value};
 
 use crate::dcql::models::{Credential, DcqlQuery};
-
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct CallingAppInfo {
-    pub package_name: [::std::os::raw::c_char; 256usize],
-    pub origin: [::std::os::raw::c_char; 512usize],
-}
 
 #[link(wasm_import_module = "credman")]
 unsafe extern "C" {
@@ -65,8 +58,7 @@ unsafe extern "C" {
     );
     fn GetRequestBuffer(buffer: *mut u8);
     fn GetRequestSize(size: *mut u32);
-    #[link_name = "GetCallingAppInfo"]
-    fn GetCallingAppInfo(info: *mut CallingAppInfo);
+
     fn AddPaymentEntry(
         cred_id: *mut ::std::os::raw::c_char,
         merchant_name: *mut ::std::os::raw::c_char,
@@ -89,7 +81,7 @@ unsafe extern "C" {
 pub trait ParseCredential {
     fn parse(&self, input: &str) -> Option<Vec<Credential>>;
 }
-pub trait ResultFormat {
+pub trait ResultFormat: Any {
     fn id(&self, credential_id: &str, provider_index: usize) -> String;
 }
 
@@ -192,11 +184,31 @@ pub fn select_credential(
     let Ok(id) = CString::new(id) else {
         return;
     };
+    let mut credentials_size: u32 = 0;
+    unsafe {
+        GetCredentialsSize(&mut credentials_size as *mut u32);
+    };
+
+    let mut buffer = vec![0u8; credentials_size as usize];
+    unsafe {
+        ReadCredentialsBuffer(buffer.as_mut_ptr(), 0, buffer.len());
+    };
+    let mut icon = std::ptr::null();
+    let mut icon_len = 0;
+    if let Some(_) = (result_format as &dyn Any).downcast_ref::<CMWalletDatabaseFormat>() {
+        let start = display_data.icon["start"].as_i64().unwrap() as usize;
+        let length = display_data.icon["length"].as_i64().unwrap() as usize;
+        let icon_slice = buffer[start..start + length].to_vec();
+        icon = icon_slice.as_ptr() as *const i8;
+        icon_len = icon_slice.len();
+        std::mem::forget(icon_slice);
+    }
+
     unsafe {
         AddStringIdEntry(
             id.as_ptr(),
-            std::ptr::null_mut(),
-            0,
+            icon,
+            icon_len,
             title.as_ptr(),
             subtitle.as_ptr(),
             std::ptr::null_mut(),
