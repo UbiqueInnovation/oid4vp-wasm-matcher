@@ -30,7 +30,7 @@ static ALLOC: mini_alloc::MiniAlloc = mini_alloc::MiniAlloc::INIT;
 fn main() {
     let credentials = get_credentials(&CMWalletDatabaseFormat);
     let Some((provider_index, query)) = get_dc_request() else {
-        return_error("could not parse dc request");
+        // return_error("could not parse dc request");
         return;
     };
     if credentials.is_empty() {

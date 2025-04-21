@@ -19,6 +19,7 @@ under the License.
  */
 use std::{collections::HashMap, ffi::CString};
 
+use base64::Engine;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
@@ -244,10 +245,11 @@ pub fn get_dc_request() -> Option<(usize, DcqlQuery)> {
         return_error("dc not utf8");
         return None;
     };
+
     let query = match serde_json::from_str::<DCRequests>(json_str) {
         Ok(q) => q,
-        Err(e) => {
-            return_error(&format!("1: {e}"));
+        Err(_) => {
+            return_error(&format!("666: {json_str}"));
             return None;
         }
     };
@@ -266,20 +268,48 @@ pub fn get_dc_request() -> Option<(usize, DcqlQuery)> {
         return None;
     };
     let Providers::OpenID4VP(provider) = first_provider.1 else {
+        return_error(&format!("4 no openid4vp provider found"));
         return None;
     };
-    let query = match serde_json::from_str::<OpenID4VPRequest>(&provider.request) {
-        Ok(q) => q,
-        Err(e) => {
-            return_error(&format!("2: {e}"));
+    let query = match (&provider.request, &provider.data) {
+        (Some(request), None) => {
+            let Ok(q) = serde_json::from_str::<OpenID4VPRequest>(request) else {
+                return None;
+            };
+            q
+        }
+        (None, Some(data)) => {
+            let parts = json_str.split(".").collect::<Vec<_>>();
+            if parts.len() != 3 {
+                return None;
+            }
+            let claims = base64::prelude::BASE64_URL_SAFE_NO_PAD
+                .decode(&parts[1])
+                .unwrap_or(Vec::new());
+            if claims.is_empty() {
+                return_error(&format!("base64 decode failed {}", parts[1]));
+                return None;
+            }
+            let Ok(q) = serde_json::from_slice::<OpenID4VPRequest>(&claims) else {
+                return_error(&format!(
+                    "base64 decode failed {:?}",
+                    std::str::from_utf8(&claims)
+                ));
+                return None;
+            };
+            q
+        }
+        _ => {
             return None;
         }
     };
+
     Some((first_provider.0, query.dcql_query.clone()))
 }
 
 #[derive(Deserialize)]
 struct DCRequests {
+    #[serde(alias = "requests")]
     providers: Vec<Providers>,
 }
 #[derive(Deserialize)]
@@ -291,8 +321,9 @@ pub enum Providers {
     Unknown,
 }
 #[derive(Deserialize)]
-struct DCRequest {
-    request: String,
+pub struct DCRequest {
+    request: Option<String>,
+    data: Option<String>,
 }
 #[derive(Deserialize)]
 struct OpenID4VPRequest {
