@@ -18,6 +18,7 @@ fn main() {
         return_error("no credentials");
         return;
     }
+    // We should have only single credential presentation for now
     let options = query.select_credentials(credentials.clone());
     let Some(first) = options.first() else {
         return_error(&format!(
@@ -34,7 +35,7 @@ fn main() {
         return_error("dcql 3 selection failed");
         return;
     };
-
+    // Add all options we found
     for option in &first_set.options {
         let c = option.credential.clone();
         let attributes = if option.claims_queries.is_empty() {
