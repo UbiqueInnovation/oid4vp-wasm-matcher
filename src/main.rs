@@ -1,17 +1,16 @@
-use std::{ffi::CString, mem::MaybeUninit};
-
 mod credman;
 mod dcql;
-use credman::{get_credentials, get_dc_request, return_error, select_credential};
-use dcql::models::Credential;
+use credman::{
+    get_credentials, get_dc_request, return_error, select_credential, CMWalletDatabaseFormat,
+};
 
 #[cfg(target_arch = "wasm32")]
 #[global_allocator]
 static ALLOC: mini_alloc::MiniAlloc = mini_alloc::MiniAlloc::INIT;
 
 fn main() {
-    let credentials = get_credentials();
-    let Some(query) = get_dc_request() else {
+    let credentials = get_credentials(&CMWalletDatabaseFormat);
+    let Some((provider_index, query)) = get_dc_request() else {
         return_error("could not parse dc request");
         return;
     };
@@ -43,13 +42,15 @@ fn main() {
     let c = first.credential.clone();
     let attributes = if first.claims_queries.is_empty() {
         let cred_id = first_set.id.clone();
-        query
-            .credentials
-            .unwrap()
+        let Some(credentials) = query.credentials else {
+            return_error("Invalid query");
+            return;
+        };
+        credentials
             .into_iter()
             .filter(|a| a.id == cred_id)
             .flat_map(|a| {
-                a.claims.unwrap().into_iter().map(|a| {
+                a.claims.unwrap_or(Vec::new()).into_iter().map(|a| {
                     a.path
                         .clone()
                         .into_iter()
@@ -83,5 +84,5 @@ fn main() {
             })
             .collect::<Vec<_>>()
     };
-    select_credential(c, attributes);
+    select_credential(c, attributes, provider_index, &CMWalletDatabaseFormat);
 }

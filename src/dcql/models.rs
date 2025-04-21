@@ -116,7 +116,12 @@ impl From<PointerPart> for Value {
     fn from(value: PointerPart) -> Self {
         match value {
             PointerPart::String(s) => Value::String(s.to_string()),
-            PointerPart::Index(i) => Value::Number(Number::from_u128(i as u128).unwrap()),
+            PointerPart::Index(i) => {
+                let Some(n) = Number::from_u128(i as u128) else {
+                    return Value::Null;
+                };
+                Value::Number(n)
+            }
             PointerPart::Null(_) => Value::Null,
         }
     }

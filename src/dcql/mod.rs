@@ -6,6 +6,7 @@ use models::{
     ClaimsQuery, Credential, CredentialOptions, CredentialQuery, CredentialSetOption, DcqlQuery,
     Disclosure, Pointer, PointerPart, SetOption,
 };
+use serde_json::Value;
 use std::collections::{BTreeMap, HashMap};
 
 pub trait InformationScore {
@@ -197,8 +198,79 @@ impl DcqlQuery {
     }
 }
 
+pub struct DisplayMetadata {
+    pub id: String,
+    pub title: String,
+    pub subtitle: String,
+    pub icon: Value,
+}
+
 impl Credential {
+    pub fn get_display_metadata(&self) -> DisplayMetadata {
+        match self {
+            Credential::DummyCredential(value) => {
+                let id = value["id"]
+                    .as_str()
+                    .map(|a| a.to_string())
+                    .unwrap_or_default();
+                let title = value["title"]
+                    .as_str()
+                    .map(|a| a.to_string())
+                    .unwrap_or_default();
+                let subtitle = value["subtitle"]
+                    .as_str()
+                    .map(|a| a.to_string())
+                    .unwrap_or_default();
+                let icon = value["icon"].clone();
+
+                DisplayMetadata {
+                    id,
+                    title,
+                    subtitle,
+                    icon,
+                }
+            }
+        }
+    }
+    fn get_credential_format(&self) -> Option<String> {
+        match self {
+            Credential::DummyCredential(value) => {
+                value["credential_format"].as_str().map(|a| a.to_string())
+            }
+        }
+    }
+    fn get_document_type(&self) -> Option<String> {
+        match self {
+            Credential::DummyCredential(value) => {
+                value["document_type"].as_str().map(|a| a.to_string())
+            }
+        }
+    }
     pub fn is_satisfied(&self, credential_query: &CredentialQuery) -> Option<Vec<ClaimsQuery>> {
+        let format = credential_query.format.clone();
+        // check that the requested format matches
+        if let Some(f) = self.get_credential_format() {
+            if f != format {
+                return None;
+            }
+        }
+        let Some(document_type) = self.get_document_type() else {
+            return None;
+        };
+        // test for document_type
+        match &credential_query.meta {
+            Some(models::Meta::SdjwtVc { vct_values }) => {
+                if !vct_values.contains(&document_type) {
+                    return None;
+                }
+            }
+            Some(models::Meta::IsoMdoc { doctype_value }) => {
+                if doctype_value != &document_type {
+                    return None;
+                }
+            }
+            _ => {}
+        }
         // if we have claims_sets we need to check possible combinations
         if let (Some(claims_sets), Some(claims)) =
             (&credential_query.claim_sets, &credential_query.claims)
@@ -211,7 +283,7 @@ impl Credential {
             }
             let claims_map = claims
                 .iter()
-                .map(|a| (a.id().unwrap(), a.to_owned()))
+                .map(|a| (a.id().unwrap_or(String::from("<invalid>")), a.to_owned()))
                 .collect::<HashMap<_, _>>();
             // we SHOULD use the "principle of least information".
             order_least.sort_by(|a, b| {
@@ -254,20 +326,25 @@ impl Credential {
             Some(vec![])
         }
     }
+    fn get_claims(&self) -> serde_json::Value {
+        match self {
+            Credential::DummyCredential(value) => value["paths"].clone(),
+        }
+    }
 }
 
 impl ClaimsQuery {
     pub fn matches(&self, credential: &Credential) -> bool {
-        match (self, credential) {
+        match (self, credential.get_claims()) {
             (
                 ClaimsQuery {
                     id: _id,
                     path,
                     values,
                 },
-                Credential::DummyCredential(sd_jwt),
+                data,
             ) => {
-                let Ok(data) = path.select(sd_jwt.clone()) else {
+                let Ok(data) = path.select(data) else {
                     return false;
                 };
                 if let Some(vals) = values.as_ref() {

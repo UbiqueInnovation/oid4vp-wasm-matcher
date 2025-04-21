@@ -1,6 +1,7 @@
-use std::ffi::CString;
+use std::{collections::HashMap, ffi::CString};
 
 use serde::{Deserialize, Serialize};
+use serde_json::{json, Value};
 
 use crate::dcql::models::{Credential, DcqlQuery};
 
@@ -65,7 +66,73 @@ unsafe extern "C" {
     fn ReadCredentialsBuffer(buffer: *mut u8, offset: usize, len: usize) -> usize;
 }
 
-pub fn get_credentials() -> Vec<Credential> {
+pub trait ParseCredential {
+    fn parse(&self, input: &str) -> Option<Vec<Credential>>;
+}
+pub trait ResultFormat {
+    fn id(&self, credential_id: &str, provider_index: usize) -> String;
+}
+
+pub struct CMWalletDatabaseFormat;
+
+impl ResultFormat for CMWalletDatabaseFormat {
+    fn id(&self, credential_id: &str, provider_index: usize) -> String {
+        json!({
+            "provider_idx": provider_index,
+            "id": credential_id
+        })
+        .to_string()
+    }
+}
+impl ParseCredential for CMWalletDatabaseFormat {
+    fn parse(&self, input: &str) -> Option<Vec<Credential>> {
+        let Ok(credentials) = serde_json::from_str::<serde_json::Value>(input) else {
+            return_error("could not parse json");
+            return None;
+        };
+        let Some(mdocs) = credentials["credentials"]["mso_mdoc"].as_object().cloned() else {
+            return None;
+        };
+
+        let mut mdocs: Vec<Credential> = mdocs
+            .iter()
+            .filter_map(|(doc_type, credentials)| {
+                let Some(array) = credentials.as_array() else {
+                    return None;
+                };
+                Some(array.iter().map(|a| {
+                    let mut a = a.clone();
+                    a["document_type"] = Value::String(doc_type.clone());
+                    a["credential_format"] = Value::String("mso_mdoc".to_string());
+                    Credential::DummyCredential(a)
+                }))
+            })
+            .flatten()
+            .collect();
+        let Some(sdjwts) = credentials["credentials"]["dc+sd-jwt"].as_object().cloned() else {
+            return None;
+        };
+        let sdjwts: Vec<Credential> = sdjwts
+            .iter()
+            .filter_map(|(doc_type, credentials)| {
+                let Some(array) = credentials.as_array() else {
+                    return None;
+                };
+                Some(array.iter().map(|a| {
+                    let mut a = a.clone();
+                    a["document_type"] = Value::String(doc_type.clone());
+                    a["credential_format"] = Value::String("dc+sd-jwt".to_string());
+                    Credential::DummyCredential(a)
+                }))
+            })
+            .flatten()
+            .collect();
+        mdocs.extend(sdjwts);
+        Some(mdocs)
+    }
+}
+
+pub fn get_credentials(parser: &dyn ParseCredential) -> Vec<Credential> {
     let mut credentials_size: u32 = 0;
     unsafe {
         GetCredentialsSize(&mut credentials_size as *mut u32);
@@ -84,67 +151,45 @@ pub fn get_credentials() -> Vec<Credential> {
         return_error("utf8 errors invalid");
         return vec![];
     };
-    let Ok(credentials) = serde_json::from_str::<serde_json::Value>(json_str) else {
-        return_error("could not parse json");
-        return vec![];
-    };
-    let cs = credentials["credentials"]["mso_mdoc"].as_object().unwrap();
-    cs.values()
-        .into_iter()
-        .flat_map(|a| {
-            a.as_array()
-                .unwrap()
-                .iter()
-                .map(|a| Credential::DummyCredential(a["paths"].clone()))
-        })
-        .collect()
+    parser.parse(json_str).unwrap_or_default()
 }
 
-pub fn select_credential(c: Credential, attributes: Vec<String>) {
-    let Credential::DummyCredential(json) = c;
+pub fn select_credential(
+    c: Credential,
+    attributes: Vec<String>,
+    provider_index: usize,
+    result_format: &dyn ResultFormat,
+) {
+    let display_data = c.get_display_metadata();
 
-    // let Some(id) = json.get("id").and_then(|a| a.as_str()) else {
-    //     return;
-    // };
-    // let Some(title) = json.get("title").and_then(|a| a.as_str()) else {
-    //     return;
-    // };
-    let Ok(subtitle) = serde_json::to_string(&json) else {
+    let Ok(title) = CString::new(display_data.title) else {
         return;
     };
-    // let Ok(id) = CString::new(id) else { return };
-    // let Ok(title) = CString::new(title) else {
-    //     return;
-    // };
-    let Ok(subtitle) = CString::new(subtitle) else {
+    let Ok(subtitle) = CString::new(display_data.subtitle) else {
+        return;
+    };
+    let id = result_format.id(&display_data.id, provider_index);
+    let Ok(id) = CString::new(id) else {
         return;
     };
     unsafe {
         AddStringIdEntry(
-            c"{\"provider_idx\":0, \"id\": 1}".as_ptr(),
+            id.as_ptr(),
             std::ptr::null_mut(),
             0,
-            c"selected".as_ptr(),
+            title.as_ptr(),
             subtitle.as_ptr(),
             std::ptr::null_mut(),
             std::ptr::null_mut(),
         );
         if attributes.is_empty() {
-            AddFieldForStringIdEntry(
-                c"{\"provider_idx\":0, \"id\": 1}".as_ptr(),
-                c"<nothing>".as_ptr(),
-                std::ptr::null(),
-            );
+            AddFieldForStringIdEntry(id.as_ptr(), c"<nothing>".as_ptr(), std::ptr::null());
         }
         for a in attributes {
             let Ok(name) = CString::new(a) else {
                 continue;
             };
-            AddFieldForStringIdEntry(
-                c"{\"provider_idx\":0, \"id\": 1}".as_ptr(),
-                name.as_ptr(),
-                std::ptr::null(),
-            );
+            AddFieldForStringIdEntry(id.as_ptr(), name.as_ptr(), std::ptr::null());
         }
     }
 }
@@ -167,7 +212,7 @@ pub fn return_error(title: &str) {
     }
 }
 
-pub fn get_dc_request() -> Option<DcqlQuery> {
+pub fn get_dc_request() -> Option<(usize, DcqlQuery)> {
     let mut request_size: u32 = 0;
     unsafe {
         GetRequestSize(&mut request_size as *mut u32);
@@ -180,7 +225,6 @@ pub fn get_dc_request() -> Option<DcqlQuery> {
         return_error("dc not utf8");
         return None;
     };
-
     let query = match serde_json::from_str::<DCRequests>(json_str) {
         Ok(q) => q,
         Err(e) => {
@@ -192,20 +236,40 @@ pub fn get_dc_request() -> Option<DcqlQuery> {
         return_error(&format!("2 providers empty"));
         return None;
     }
-    let query =
-        match serde_json::from_str::<OpenID4VPRequest>(&query.providers.first().unwrap().request) {
-            Ok(q) => q,
-            Err(e) => {
-                return_error(&format!("2: {e}"));
-                return None;
-            }
-        };
-    Some(query.dcql_query.clone())
+    let Some(first_provider) = query
+        .providers
+        .iter()
+        .enumerate()
+        .filter(|(_, a)| matches!(a, Providers::OpenID4VP(_)))
+        .next()
+    else {
+        return_error(&format!("3 no openid4vp provider found"));
+        return None;
+    };
+    let Providers::OpenID4VP(provider) = first_provider.1 else {
+        return None;
+    };
+    let query = match serde_json::from_str::<OpenID4VPRequest>(&provider.request) {
+        Ok(q) => q,
+        Err(e) => {
+            return_error(&format!("2: {e}"));
+            return None;
+        }
+    };
+    Some((first_provider.0, query.dcql_query.clone()))
 }
 
 #[derive(Deserialize)]
 struct DCRequests {
-    providers: Vec<DCRequest>,
+    providers: Vec<Providers>,
+}
+#[derive(Deserialize)]
+#[serde(tag = "protocol")]
+pub enum Providers {
+    #[serde(rename = "openid4vp")]
+    OpenID4VP(DCRequest),
+    #[serde(other)]
+    Unknown,
 }
 #[derive(Deserialize)]
 struct DCRequest {
