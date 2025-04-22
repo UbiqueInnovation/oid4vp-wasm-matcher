@@ -40,16 +40,16 @@ fn main() {
         return;
     };
     if credentials.is_empty() {
-        // return_error("no credentials");
+        return_error("no credentials");
         return;
     }
     // We should have only single credential presentation for now
     let options = query.select_credentials(credentials.clone());
     let Some(first) = options.first() else {
-        // return_error(&format!(
-        //     "dcql 1 selection failed, {:?}/{:?}",
-        //     query.credential_sets, query.credentials
-        // ));
+        return_error(&format!(
+            "dcql 1 selection failed, {:?}/{:?}",
+            query.credential_sets, query.credentials
+        ));
         return;
     };
     let Some(first) = first.set_options.first() else {
@@ -88,7 +88,7 @@ fn main() {
                                 dcql::models::PointerPart::Null(_) => String::from("[]"),
                             })
                             .collect::<Vec<_>>()
-                            .join(".")
+                            .join("/")
                     })
                 })
                 .collect()
@@ -108,7 +108,7 @@ fn main() {
                             dcql::models::PointerPart::Null(_) => String::from("[]"),
                         })
                         .collect::<Vec<_>>()
-                        .join(".")
+                        .join("/")
                 })
                 .collect::<Vec<_>>()
         };

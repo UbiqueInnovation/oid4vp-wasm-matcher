@@ -169,7 +169,8 @@ pub fn select_credential(
             let Ok(name) = CString::new(a) else {
                 continue;
             };
-            AddFieldForStringIdEntry(id.as_ptr(), name.as_ptr(), std::ptr::null());
+            let claims = c.get_claims();
+            let path = AddFieldForStringIdEntry(id.as_ptr(), name.as_ptr(), std::ptr::null());
         }
     }
 }
@@ -211,12 +212,12 @@ pub fn get_dc_request() -> Option<(usize, DcqlQuery)> {
     let query = match serde_json::from_str::<DCRequests>(json_str) {
         Ok(q) => q,
         Err(_) => {
-            // return_error(&format!("666: {json_str}"));
+            return_error(&format!("666: {json_str}"));
             return None;
         }
     };
     if query.providers.is_empty() {
-        // return_error(&format!("2 providers empty"));
+        return_error(&format!("2 providers empty"));
         return None;
     }
     let Some(first_provider) = query
@@ -226,38 +227,63 @@ pub fn get_dc_request() -> Option<(usize, DcqlQuery)> {
         .filter(|(_, a)| matches!(a, Providers::OpenID4VP(_)))
         .next()
     else {
-        // return_error(&format!("3 no openid4vp provider found"));
+        return_error(&format!("3 no openid4vp provider found"));
         return None;
     };
     let Providers::OpenID4VP(provider) = first_provider.1 else {
-        // return_error(&format!("4 no openid4vp provider found"));
+        return_error(&format!("4 no openid4vp provider found"));
         return None;
     };
+
     let query = match (&provider.request, &provider.data) {
-        (Some(request), None) => {
-            let Ok(q) = serde_json::from_str::<OpenID4VPRequest>(request) else {
+        (Some(request), None) if request.split(".").count() != 3 => {
+            // We have a request inside a request
+            if let Ok(wrapped_request) = serde_json::from_str::<WrappedRequest>(request) {
+                let parts = wrapped_request.request.split(".").collect::<Vec<_>>();
+                if parts.len() != 3 {
+                    return_error(&format!("base64 decode failed {:?}", parts));
+                    return None;
+                }
+                let claims = base64::prelude::BASE64_URL_SAFE_NO_PAD
+                    .decode(&parts[1])
+                    .unwrap_or(Vec::new());
+                if claims.is_empty() {
+                    return_error(&format!("base64 decode failed {}", parts[1]));
+                    return None;
+                }
+                let Ok(q) = serde_json::from_slice::<OpenID4VPRequest>(&claims) else {
+                    return_error(&format!(
+                        "base64 decode failed {:?}",
+                        std::str::from_utf8(&claims)
+                    ));
+                    return None;
+                };
+                q
+            } else if let Ok(q) = serde_json::from_str::<OpenID4VPRequest>(request) {
+                q
+            } else {
+                return_error(&format!("invalid request format {request}"));
                 return None;
-            };
-            q
+            }
         }
-        (None, Some(data)) => {
+        (None, Some(data)) | (Some(data), None) if data.split(".").count() == 3 => {
             let parts = data.split(".").collect::<Vec<_>>();
             if parts.len() != 3 {
-                // return_error(&format!("base64 decode failed {:?}", parts));
+                return_error(&format!("base64 decode failed {:?}", parts));
                 return None;
             }
             let claims = base64::prelude::BASE64_URL_SAFE_NO_PAD
                 .decode(&parts[1])
                 .unwrap_or(Vec::new());
             if claims.is_empty() {
-                // return_error(&format!("base64 decode failed {}", parts[1]));
+                return_error(&format!("base64 decode failed {}", parts[1]));
                 return None;
             }
             let Ok(q) = serde_json::from_slice::<OpenID4VPRequest>(&claims) else {
-                // return_error(&format!(
-                //     "base64 decode failed {:?}",
-                //     std::str::from_utf8(&claims)
-                // ));
+                return_error(&format!(
+                    "base64 decode failed {:?}",
+                    std::str::from_utf8(&claims)
+                ));
                 return None;
             };
             q
@@ -291,4 +317,9 @@ pub struct DCRequest {
 #[derive(Deserialize)]
 struct OpenID4VPRequest {
     dcql_query: DcqlQuery,
+}
+
+#[derive(Deserialize)]
+struct WrappedRequest {
+    request: String,
 }

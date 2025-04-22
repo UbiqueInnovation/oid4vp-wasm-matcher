@@ -337,7 +337,7 @@ impl Credential {
             Some(vec![])
         }
     }
-    fn get_claims(&self) -> serde_json::Value {
+    pub fn get_claims(&self) -> serde_json::Value {
         match self {
             Credential::DummyCredential(value) => value["paths"].clone(),
         }
@@ -781,6 +781,7 @@ mod tests {
         let result = serde_json::from_str::<DcqlQuery>(query).unwrap();
         let creds = UbiqueWalletDatabaseFormat.parse(creds).unwrap();
         let r = result.select_credentials(creds);
+        // panic!("{r:?}");
         assert!(r.len() > 0);
     }
 }
