@@ -32,7 +32,23 @@ impl ResultFormat for UbiqueWalletDatabaseFormat {
     }
 
     fn get_value(&self, path: &[PointerPart], data: &Value) -> Option<String> {
-        None
+        let s = selector(path);
+        let v = s(data).ok()?;
+        let part = v.first()?;
+        match &part {
+            Value::String(s) => Some(s.to_string()),
+            Value::Bool(t) => {
+                if *t {
+                    Some(String::from("✓"))
+                } else {
+                    Some(String::from("❌"))
+                }
+            }
+            Value::Object(o) => Some(serde_json::to_string_pretty(&o).ok()?),
+            Value::Array(a) => Some(serde_json::to_string_pretty(&a).ok()?),
+            Value::Number(a) => Some(a.to_string()),
+            _ => None,
+        }
     }
 
     fn get_display_name(&self, path: &[PointerPart], data: &Value) -> Option<String> {
