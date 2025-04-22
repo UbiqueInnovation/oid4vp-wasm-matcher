@@ -36,7 +36,7 @@ fn main() {
     let credentials = get_credentials(&WalletParser);
 
     let Some((provider_index, query)) = get_dc_request() else {
-        // return_error("could not parse dc request");
+        return_error("could not parse dc request");
         return;
     };
     if credentials.is_empty() {
@@ -53,15 +53,15 @@ fn main() {
         return;
     };
     let Some(first) = first.set_options.first() else {
-        // return_error("dcql 2 selection failed");
+        return_error("dcql 2 selection failed");
         return;
     };
     let Some(first_set) = first.first() else {
-        // return_error("dcql 3 selection failed");
+        return_error("dcql 3 selection failed");
         return;
     };
     if first_set.options.is_empty() {
-        // return_error("no credentials");
+        return_error("no credentials");
         return;
     }
     // Add all options we found
@@ -70,7 +70,7 @@ fn main() {
         let attributes = if option.claims_queries.is_empty() {
             let cred_id = first_set.id.clone();
             let Some(credentials) = &query.credentials else {
-                // return_error("Invalid query");
+                return_error("Invalid query");
                 return;
             };
             let credentials = credentials.clone();

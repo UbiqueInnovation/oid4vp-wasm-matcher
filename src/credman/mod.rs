@@ -24,7 +24,7 @@ use serde::Deserialize;
 
 use crate::dcql::{
     models::{Credential, DcqlQuery, Pointer},
-    parsers::{CMWalletDatabaseFormat, ParseCredential, ResultFormat},
+    parsers::{CMWalletDatabaseFormat, ParseCredential, ResultFormat, DEBUG},
 };
 
 #[link(wasm_import_module = "credman")]
@@ -106,6 +106,7 @@ pub fn get_credentials(parser: &dyn ParseCredential) -> Vec<Credential> {
         return_error("utf8 errors invalid");
         return vec![];
     };
+    parser.set_debug(json_str);
     let Some(result) = parser.parse(json_str) else {
         return_error("invalid credential format");
         return vec![];
@@ -187,6 +188,9 @@ pub fn select_credential(
 
 #[inline]
 pub fn return_error(title: &str) {
+    if !DEBUG.get().unwrap_or(&false) {
+        return;
+    }
     let Ok(title) = CString::new(title) else {
         return;
     };
