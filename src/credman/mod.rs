@@ -23,7 +23,7 @@ use base64::Engine;
 use serde::Deserialize;
 
 use crate::dcql::{
-    models::{Credential, DcqlQuery},
+    models::{Credential, DcqlQuery, Pointer},
     parsers::{CMWalletDatabaseFormat, ParseCredential, ResultFormat},
 };
 
@@ -116,7 +116,7 @@ pub fn get_credentials(parser: &dyn ParseCredential) -> Vec<Credential> {
 #[inline]
 pub fn select_credential(
     c: Credential,
-    attributes: Vec<String>,
+    attributes: Vec<(Pointer, String)>,
     provider_index: usize,
     result_format: &dyn ResultFormat,
 ) {
@@ -165,12 +165,22 @@ pub fn select_credential(
         if attributes.is_empty() {
             AddFieldForStringIdEntry(id.as_ptr(), c"<nothing>".as_ptr(), std::ptr::null());
         }
-        for a in attributes {
-            let Ok(name) = CString::new(a) else {
+        for (ptr, a) in attributes {
+            let claims = c.get_claims();
+            let display_name = result_format.get_display_name(&ptr, &claims).unwrap_or(a);
+            let display_value = result_format
+                .get_value(&ptr, &claims)
+                .map(|a| CString::new(a).ok())
+                .flatten();
+
+            let Ok(name) = CString::new(display_name) else {
                 continue;
             };
-            let claims = c.get_claims();
-            let path = AddFieldForStringIdEntry(id.as_ptr(), name.as_ptr(), std::ptr::null());
+            let mut val_ptr = std::ptr::null();
+            if let Some(val) = display_value.as_ref() {
+                val_ptr = val.as_ptr();
+            }
+            AddFieldForStringIdEntry(id.as_ptr(), name.as_ptr(), val_ptr);
         }
     }
 }

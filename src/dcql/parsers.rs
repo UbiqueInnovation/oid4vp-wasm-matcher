@@ -5,13 +5,18 @@ use serde_json::{json, Value};
 #[cfg(target_arch = "wasm32")]
 use crate::credman::return_error;
 
-use super::models::Credential;
+use super::{
+    claims_pointer::selector,
+    models::{Credential, PointerPart},
+};
 
 pub trait ParseCredential: Any {
     fn parse(&self, input: &str) -> Option<Vec<Credential>>;
 }
 pub trait ResultFormat: Any {
     fn id(&self, credential_id: &str, provider_index: usize) -> String;
+    fn get_value(&self, path: &[PointerPart], data: &Value) -> Option<String>;
+    fn get_display_name(&self, path: &[PointerPart], data: &Value) -> Option<String>;
 }
 
 pub struct CMWalletDatabaseFormat;
@@ -24,6 +29,14 @@ impl ResultFormat for UbiqueWalletDatabaseFormat {
             "id": credential_id
         })
         .to_string()
+    }
+
+    fn get_value(&self, path: &[PointerPart], data: &Value) -> Option<String> {
+        None
+    }
+
+    fn get_display_name(&self, path: &[PointerPart], data: &Value) -> Option<String> {
+        None
     }
 }
 impl ParseCredential for UbiqueWalletDatabaseFormat {
@@ -48,6 +61,32 @@ impl ResultFormat for CMWalletDatabaseFormat {
             "id": credential_id
         })
         .to_string()
+    }
+    fn get_value(&self, path: &[PointerPart], data: &Value) -> Option<String> {
+        let s = selector(path);
+        let v = s(data).ok()?;
+        let part = v.first()?;
+        match &part["value"] {
+            Value::String(s) => Some(s.to_string()),
+            Value::Bool(t) => {
+                if *t {
+                    Some(String::from("✓"))
+                } else {
+                    Some(String::from("❌"))
+                }
+            }
+            Value::Object(o) => Some(serde_json::to_string_pretty(&o).ok()?),
+            Value::Array(a) => Some(serde_json::to_string_pretty(&a).ok()?),
+            Value::Number(a) => Some(a.to_string()),
+            _ => None,
+        }
+    }
+
+    fn get_display_name(&self, path: &[PointerPart], data: &Value) -> Option<String> {
+        let s = selector(path);
+        let v = s(data).ok()?;
+        let part = v.first()?;
+        part["display"].as_str().map(|a| a.to_string())
     }
 }
 impl ParseCredential for CMWalletDatabaseFormat {

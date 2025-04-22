@@ -79,16 +79,19 @@ fn main() {
                 .filter(|a| a.id == cred_id)
                 .flat_map(|a| {
                     a.claims.unwrap_or(Vec::new()).into_iter().map(|a| {
-                        a.path
-                            .clone()
-                            .into_iter()
-                            .map(|a| match a {
-                                dcql::models::PointerPart::String(a) => a,
-                                dcql::models::PointerPart::Index(i) => i.to_string(),
-                                dcql::models::PointerPart::Null(_) => String::from("[]"),
-                            })
-                            .collect::<Vec<_>>()
-                            .join("/")
+                        (
+                            a.path.clone(),
+                            a.path
+                                .clone()
+                                .into_iter()
+                                .map(|a| match a {
+                                    dcql::models::PointerPart::String(a) => a,
+                                    dcql::models::PointerPart::Index(i) => i.to_string(),
+                                    dcql::models::PointerPart::Null(_) => String::from("[]"),
+                                })
+                                .collect::<Vec<_>>()
+                                .join("/"),
+                        )
                     })
                 })
                 .collect()
@@ -98,17 +101,20 @@ fn main() {
                 .clone()
                 .into_iter()
                 .map(|first_query| {
-                    first_query
-                        .path
-                        .clone()
-                        .into_iter()
-                        .map(|a| match a {
-                            dcql::models::PointerPart::String(a) => a,
-                            dcql::models::PointerPart::Index(i) => i.to_string(),
-                            dcql::models::PointerPart::Null(_) => String::from("[]"),
-                        })
-                        .collect::<Vec<_>>()
-                        .join("/")
+                    (
+                        first_query.path.clone(),
+                        first_query
+                            .path
+                            .clone()
+                            .into_iter()
+                            .map(|a| match a {
+                                dcql::models::PointerPart::String(a) => a,
+                                dcql::models::PointerPart::Index(i) => i.to_string(),
+                                dcql::models::PointerPart::Null(_) => String::from("[]"),
+                            })
+                            .collect::<Vec<_>>()
+                            .join("/"),
+                    )
                 })
                 .collect::<Vec<_>>()
         };

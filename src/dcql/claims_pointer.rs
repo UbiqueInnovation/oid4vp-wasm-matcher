@@ -82,10 +82,12 @@ impl Selector for Pointer {
     }
 }
 
-pub fn selector(path: &Pointer) -> impl Fn(&Value) -> Result<Vec<Value>, QueryError> + '_ {
+pub fn selector<'a, T: AsRef<[PointerPart]> + 'a>(
+    path: T,
+) -> impl Fn(&'a Value) -> Result<Vec<Value>, QueryError> {
     move |input| {
         let mut currently_selected = vec![input.clone()];
-        for part in path {
+        for part in path.as_ref() {
             match part {
                 PointerPart::String(key) if currently_selected.iter().all(|a| a.is_object()) => {
                     currently_selected = currently_selected
