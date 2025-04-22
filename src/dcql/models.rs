@@ -22,13 +22,13 @@ use serde_json::{Number, Value};
 use std::hash::Hash;
 use std::str::FromStr;
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct DcqlQuery {
     pub credentials: Option<Vec<CredentialQuery>>,
     pub credential_sets: Option<Vec<CredentialSetQuery>>,
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct CredentialQuery {
     pub id: String,
     pub format: String,
@@ -40,14 +40,14 @@ pub struct CredentialQuery {
     pub claim_sets: Option<Vec<Vec<String>>>,
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize, Debug, Clone)]
 #[serde(untagged)]
 pub enum Meta {
     IsoMdoc { doctype_value: String },
     SdjwtVc { vct_values: Vec<String> },
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct TrustedAuthority {
     pub r#type: String,
     pub values: Vec<String>,
@@ -96,7 +96,7 @@ impl FromStr for Credential {
     }
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct ClaimsQuery {
     pub id: Option<String>,
     pub path: Pointer,
@@ -109,7 +109,7 @@ impl ClaimsQuery {
     }
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct CredentialSetQuery {
     pub options: Vec<Vec<String>>,
     #[serde(default = "default_required")]
@@ -123,7 +123,7 @@ pub const fn default_required() -> bool {
 
 pub type Pointer = Vec<PointerPart>;
 
-#[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
 #[serde(untagged)]
 pub enum PointerPart {
     String(String),

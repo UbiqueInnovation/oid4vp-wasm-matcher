@@ -21,9 +21,11 @@ use std::{any::Any, ffi::CString};
 
 use base64::Engine;
 use serde::Deserialize;
-use serde_json::{json, Value};
 
-use crate::dcql::models::{Credential, DcqlQuery};
+use crate::dcql::{
+    models::{Credential, DcqlQuery},
+    parsers::{CMWalletDatabaseFormat, ParseCredential, ResultFormat},
+};
 
 #[link(wasm_import_module = "credman")]
 unsafe extern "C" {
@@ -78,72 +80,7 @@ unsafe extern "C" {
     fn ReadCredentialsBuffer(buffer: *mut u8, offset: usize, len: usize) -> usize;
 }
 
-pub trait ParseCredential {
-    fn parse(&self, input: &str) -> Option<Vec<Credential>>;
-}
-pub trait ResultFormat: Any {
-    fn id(&self, credential_id: &str, provider_index: usize) -> String;
-}
-
-pub struct CMWalletDatabaseFormat;
-
-impl ResultFormat for CMWalletDatabaseFormat {
-    fn id(&self, credential_id: &str, provider_index: usize) -> String {
-        json!({
-            "provider_idx": provider_index,
-            "id": credential_id
-        })
-        .to_string()
-    }
-}
-impl ParseCredential for CMWalletDatabaseFormat {
-    fn parse(&self, input: &str) -> Option<Vec<Credential>> {
-        let Ok(credentials) = serde_json::from_str::<serde_json::Value>(input) else {
-            return_error("could not parse json");
-            return None;
-        };
-        let Some(mdocs) = credentials["credentials"]["mso_mdoc"].as_object().cloned() else {
-            return None;
-        };
-
-        let mut mdocs: Vec<Credential> = mdocs
-            .iter()
-            .filter_map(|(doc_type, credentials)| {
-                let Some(array) = credentials.as_array() else {
-                    return None;
-                };
-                Some(array.iter().map(|a| {
-                    let mut a = a.clone();
-                    a["document_type"] = Value::String(doc_type.clone());
-                    a["credential_format"] = Value::String("mso_mdoc".to_string());
-                    Credential::DummyCredential(a)
-                }))
-            })
-            .flatten()
-            .collect();
-        let Some(sdjwts) = credentials["credentials"]["dc+sd-jwt"].as_object().cloned() else {
-            return None;
-        };
-        let sdjwts: Vec<Credential> = sdjwts
-            .iter()
-            .filter_map(|(doc_type, credentials)| {
-                let Some(array) = credentials.as_array() else {
-                    return None;
-                };
-                Some(array.iter().map(|a| {
-                    let mut a = a.clone();
-                    a["document_type"] = Value::String(doc_type.clone());
-                    a["credential_format"] = Value::String("dc+sd-jwt".to_string());
-                    Credential::DummyCredential(a)
-                }))
-            })
-            .flatten()
-            .collect();
-        mdocs.extend(sdjwts);
-        Some(mdocs)
-    }
-}
-
+#[inline]
 pub fn get_credentials(parser: &dyn ParseCredential) -> Vec<Credential> {
     let mut credentials_size: u32 = 0;
     unsafe {
@@ -154,18 +91,29 @@ pub fn get_credentials(parser: &dyn ParseCredential) -> Vec<Credential> {
     unsafe {
         ReadCredentialsBuffer(buffer.as_mut_ptr(), 0, buffer.len());
     };
+    let mut jo = 0;
+    if let Some(_) = (parser as &dyn Any).downcast_ref::<CMWalletDatabaseFormat>() {
+        let mut json_offset: [u8; 4] = [0, 0, 0, 0];
+        json_offset.copy_from_slice(&buffer[..4]);
+        let json_offset = u32::from_le_bytes(json_offset) as usize;
+        jo = json_offset;
+        if jo > buffer.len() {
+            jo = 0;
+        }
+    }
 
-    let mut json_offset: [u8; 4] = [0, 0, 0, 0];
-    json_offset.copy_from_slice(&buffer[..4]);
-    let json_offset = u32::from_le_bytes(json_offset) as usize;
-
-    let Ok(json_str) = std::str::from_utf8(&buffer[json_offset..]) else {
+    let Ok(json_str) = std::str::from_utf8(&buffer[jo..]) else {
         return_error("utf8 errors invalid");
         return vec![];
     };
-    parser.parse(json_str).unwrap_or_default()
+    let Some(result) = parser.parse(json_str) else {
+        return_error("invalid credential format");
+        return vec![];
+    };
+    result
 }
 
+#[inline]
 pub fn select_credential(
     c: Credential,
     attributes: Vec<String>,
@@ -196,8 +144,8 @@ pub fn select_credential(
     let mut icon = std::ptr::null();
     let mut icon_len = 0;
     if let Some(_) = (result_format as &dyn Any).downcast_ref::<CMWalletDatabaseFormat>() {
-        let start = display_data.icon["start"].as_i64().unwrap() as usize;
-        let length = display_data.icon["length"].as_i64().unwrap() as usize;
+        let start = display_data.icon["start"].as_i64().unwrap_or(0) as usize;
+        let length = display_data.icon["length"].as_i64().unwrap_or(0) as usize;
         let icon_slice = buffer[start..start + length].to_vec();
         icon = icon_slice.as_ptr() as *const i8;
         icon_len = icon_slice.len();
@@ -226,6 +174,7 @@ pub fn select_credential(
     }
 }
 
+#[inline]
 pub fn return_error(title: &str) {
     let Ok(title) = CString::new(title) else {
         return;
@@ -244,6 +193,7 @@ pub fn return_error(title: &str) {
     }
 }
 
+#[inline]
 pub fn get_dc_request() -> Option<(usize, DcqlQuery)> {
     let mut request_size: u32 = 0;
     unsafe {
@@ -261,12 +211,12 @@ pub fn get_dc_request() -> Option<(usize, DcqlQuery)> {
     let query = match serde_json::from_str::<DCRequests>(json_str) {
         Ok(q) => q,
         Err(_) => {
-            return_error(&format!("666: {json_str}"));
+            // return_error(&format!("666: {json_str}"));
             return None;
         }
     };
     if query.providers.is_empty() {
-        return_error(&format!("2 providers empty"));
+        // return_error(&format!("2 providers empty"));
         return None;
     }
     let Some(first_provider) = query
@@ -276,11 +226,11 @@ pub fn get_dc_request() -> Option<(usize, DcqlQuery)> {
         .filter(|(_, a)| matches!(a, Providers::OpenID4VP(_)))
         .next()
     else {
-        return_error(&format!("3 no openid4vp provider found"));
+        // return_error(&format!("3 no openid4vp provider found"));
         return None;
     };
     let Providers::OpenID4VP(provider) = first_provider.1 else {
-        return_error(&format!("4 no openid4vp provider found"));
+        // return_error(&format!("4 no openid4vp provider found"));
         return None;
     };
     let query = match (&provider.request, &provider.data) {
@@ -291,22 +241,23 @@ pub fn get_dc_request() -> Option<(usize, DcqlQuery)> {
             q
         }
         (None, Some(data)) => {
-            let parts = json_str.split(".").collect::<Vec<_>>();
+            let parts = data.split(".").collect::<Vec<_>>();
             if parts.len() != 3 {
+                // return_error(&format!("base64 decode failed {:?}", parts));
                 return None;
             }
             let claims = base64::prelude::BASE64_URL_SAFE_NO_PAD
                 .decode(&parts[1])
                 .unwrap_or(Vec::new());
             if claims.is_empty() {
-                return_error(&format!("base64 decode failed {}", parts[1]));
+                // return_error(&format!("base64 decode failed {}", parts[1]));
                 return None;
             }
             let Ok(q) = serde_json::from_slice::<OpenID4VPRequest>(&claims) else {
-                return_error(&format!(
-                    "base64 decode failed {:?}",
-                    std::str::from_utf8(&claims)
-                ));
+                // return_error(&format!(
+                //     "base64 decode failed {:?}",
+                //     std::str::from_utf8(&claims)
+                // ));
                 return None;
             };
             q
