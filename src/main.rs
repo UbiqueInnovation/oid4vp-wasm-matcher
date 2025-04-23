@@ -40,7 +40,7 @@ fn main() {
         return;
     };
     if credentials.is_empty() {
-        return_error("no credentials");
+        return_error("parsing credentials failed");
         return;
     }
     // We should have only single credential presentation for now
@@ -61,7 +61,10 @@ fn main() {
         return;
     };
     if first_set.options.is_empty() {
-        return_error("no credentials");
+        return_error(&format!(
+            "dcql no set-options, {:?}/{:?}",
+            query.credential_sets, query.credentials
+        ));
         return;
     }
     // Add all options we found

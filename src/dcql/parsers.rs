@@ -17,14 +17,18 @@ KIND, either express or implied.  See the License for the
 specific language governing permissions and limitations
 under the License.
  */
-use std::{any::Any, cell::OnceCell};
+use std::{
+    any::Any,
+    cell::{LazyCell, OnceCell},
+    sync::{LazyLock, OnceLock},
+};
 
 use serde_json::{json, Value};
 
 #[cfg(target_arch = "wasm32")]
 use crate::credman::return_error;
 
-pub const DEBUG: OnceCell<bool> = OnceCell::new();
+pub static DEBUG: OnceLock<bool> = OnceLock::new();
 
 use super::{
     claims_pointer::selector,
@@ -184,6 +188,8 @@ impl ParseCredential for CMWalletDatabaseFormat {
             return;
         };
         let Some(mdocs) = credentials["debug"].as_bool() else {
+            #[cfg(target_arch = "wasm32")]
+            return_error("could not parse json");
             return;
         };
         let _ = DEBUG.set(mdocs);
