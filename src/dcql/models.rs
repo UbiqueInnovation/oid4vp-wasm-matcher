@@ -17,7 +17,7 @@ KIND, either express or implied.  See the License for the
 specific language governing permissions and limitations
 under the License.
  */
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use serde_json::{Number, Value};
 use std::hash::Hash;
 use std::str::FromStr;

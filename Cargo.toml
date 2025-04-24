@@ -19,7 +19,6 @@ base64 = "0.22.1"
 mini-alloc = "0.8.4"
 serde = { version = "1.0.219", features = ["derive"] }
 serde_json = "1.0.140"
-tinyjson = "2.5.1"
 
 [features]
 default = ["cmwallet"]
