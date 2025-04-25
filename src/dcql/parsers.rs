@@ -29,17 +29,35 @@ use serde_json::{json, Value};
 use crate::credman::return_error;
 
 pub static DEBUG: OnceLock<bool> = OnceLock::new();
+pub static PARSER: OnceLock<Box<dyn Parser>> = OnceLock::new();
 
 use super::{
     claims_pointer::selector,
     models::{Credential, PointerPart},
 };
 
-pub trait ParseCredential: Any {
+pub trait Parser: ParseCredential + ResultFormat {
+    fn path_transform(&self, path: &[PointerPart]) -> Vec<PointerPart>;
+}
+
+impl Parser for UbiqueWalletDatabaseFormat {
+    fn path_transform(&self, path: &[PointerPart]) -> Vec<PointerPart> {
+        path.to_vec()
+    }
+}
+impl Parser for CMWalletDatabaseFormat {
+    fn path_transform(&self, path: &[PointerPart]) -> Vec<PointerPart> {
+        let mut p = path.to_vec();
+        p.push(PointerPart::String("value".to_string()));
+        p
+    }
+}
+
+pub trait ParseCredential: Any + Send + Sync {
     fn parse(&self, input: &str) -> Option<Vec<Credential>>;
     fn set_debug(&self, input: &str);
 }
-pub trait ResultFormat: Any {
+pub trait ResultFormat: Any + Send + Sync {
     fn id(&self, credential_id: &str, provider_index: usize) -> String;
     fn get_value(&self, path: &[PointerPart], data: &Value) -> Option<String>;
     fn get_display_name(&self, path: &[PointerPart], data: &Value) -> Option<String>;

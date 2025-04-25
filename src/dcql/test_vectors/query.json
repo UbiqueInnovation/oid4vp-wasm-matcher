@@ -1,0 +1,25 @@
+{
+  "credentials": [
+    {
+      "id": "0",
+      "format": "dc+sd-jwt",
+      "meta": {
+        "vct_values": ["https://example.eudi.ec.europa.eu/hiid/1"]
+      },
+      "claims": [
+        {
+          "path": ["health_insurance_id"]
+        },
+        {
+          "path": ["affiliation_country"]
+        }
+      ]
+    }
+  ],
+  "credential_sets": [
+    {
+      "options": [["0"]],
+      "purpose": "To receive your prescription and finalize the transaction, we require the following attributes"
+    }
+  ]
+}

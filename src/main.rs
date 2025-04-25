@@ -26,12 +26,14 @@ use credman::{get_credentials, get_dc_request, return_error, select_credential};
 use dcql::parsers::CMWalletDatabaseFormat as WalletParser;
 #[cfg(feature = "ubiquewallet")]
 use dcql::parsers::UbiqueWalletDatabaseFormat as WalletParser;
+use dcql::parsers::PARSER;
 
 #[cfg(target_arch = "wasm32")]
 #[global_allocator]
 static ALLOC: mini_alloc::MiniAlloc = mini_alloc::MiniAlloc::INIT;
 
 fn main() {
+    let _ = PARSER.set(Box::new(WalletParser));
     // let credentials = get_credentials(&UbiqueWalletDatabaseFormat);
     let credentials = get_credentials(&WalletParser);
 

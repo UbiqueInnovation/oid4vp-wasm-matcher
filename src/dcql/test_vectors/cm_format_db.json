@@ -1,0 +1,112 @@
+{
+  "credentials": {
+    "mso_mdoc": {
+      "org.iso.18013.5.1.mDL": [
+        {
+          "id": "1",
+          "title": "Jon's Driving License",
+          "subtitle": "Utopia DMV",
+          "icon": { "start": 4, "length": 17355 },
+          "paths": {
+            "org.iso.18013.5.1": {
+              "family_name": { "value": "Smith", "display": "Family Name" },
+              "given_name": { "value": "Jon", "display": "Given Name" },
+              "age_over_18": { "value": true, "display": "Age Over 18" }
+            }
+          }
+        }
+      ],
+      "com.emvco.payment_card": [
+        {
+          "id": "2",
+          "title": "Jon's Card 2312",
+          "subtitle": "5466 0000 5555 ****",
+          "icon": { "start": 17359, "length": 17355 },
+          "paths": {
+            "com.emvco.payment_card.1": {
+              "holder_name": { "value": "Jon Smith", "display": "Holder Name" },
+              "card_number": {
+                "value": 5466000055552312,
+                "display": "Card Number"
+              },
+              "expiry_month": { "value": 7, "display": "Month of Expiry" },
+              "expiry_year": { "value": 2027, "display": "Year of Expiry" },
+              "card_network": {
+                "value": "Mastercard",
+                "display": "Card Network"
+              },
+              "card_issuer": { "value": "Tribank", "display": "Card issuer" }
+            }
+          }
+        },
+        {
+          "id": "3",
+          "title": "Jon's Card 9012",
+          "subtitle": "4000 1234 5678 ****",
+          "icon": { "start": 34714, "length": 17695 },
+          "paths": {
+            "com.emvco.payment_card.1": {
+              "holder_name": { "value": "Jon Smith", "display": "Holder Name" },
+              "card_number": {
+                "value": 4000123456789012,
+                "display": "Card Number"
+              },
+              "expiry_month": { "value": 7, "display": "Month of Expiry" },
+              "expiry_year": { "value": 2028, "display": "Year of Expiry" },
+              "card_network": { "value": "Visa", "display": "Card Network" },
+              "card_issuer": { "value": "Tribank", "display": "Card issuer" }
+            }
+          }
+        }
+      ],
+      "org.iso.7367.1.mVRC": [
+        {
+          "id": "4",
+          "title": "Erika's Vehicle Registration",
+          "subtitle": "Utopia DMV",
+          "icon": { "start": 52409, "length": 0 },
+          "paths": {
+            "org.iso.18013.5.1": {
+              "family_name": { "value": "Smith", "display": "Family Name" },
+              "first_name": { "value": "Erika", "display": "Given Name" }
+            },
+            "org.iso.7367.1": {
+              "vehicle_holder": {
+                "value": "94043",
+                "display": "Vehicle Holder Information"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "dc+sd-jwt": {
+      "urn:eu.europa.ec.eudi:pid:1": [
+        {
+          "id": "5",
+          "title": "Erika's PID",
+          "subtitle": "Utopia Government",
+          "icon": { "start": 52409, "length": 0 },
+          "paths": {
+            "family_name": { "display": "Surname", "value": "Mustermann" },
+            "given_name": { "display": "Given Name", "value": "Erika" },
+            "age_over_18": { "display": "Age Over 18", "value": true },
+            "iss": { "value": "https:\/\/digital-credentials.dev" },
+            "iat": { "value": 1683000000 },
+            "exp": { "value": 1883000000 },
+            "vct": { "value": "urn:eu.europa.ec.eudi:pid:1" },
+            "cnf": {
+              "jwk": {
+                "kty": { "value": "EC" },
+                "crv": { "value": "P-256" },
+                "x": { "value": "5kc1aI7abeZlFlq6ibdlLYdocome6okVAElNJ-nRDU0" },
+                "y": { "value": "WKt6DsX62o7bnYXyyA0xk_FEfNSHEqpRgQOVaabWAw0" }
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "debug": true
+}

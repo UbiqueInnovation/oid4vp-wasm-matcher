@@ -1,0 +1,376 @@
+[
+  {
+    "paths": {
+      "org.iso.18013.5.1": {
+        "given_name": "Erika",
+        "family_name": "Mustermann",
+        "birth_date": "1964-08-12",
+        "age_over_18": true,
+        "document_number": "Z021AB37X13",
+        "portrait": [],
+        "signature_usual_mark": [],
+        "un_distinguishing_sign": "D",
+        "issuing_authority": "Bundesrepublik Deutschland",
+        "issue_date": "2025-04-04T11:39:09Z",
+        "expiry_date": "2026-04-14T11:39:09Z",
+        "issuing_country": "NL",
+        "driving_privileges": [
+          {
+            "vehicle_category_code": "B",
+            "issue_date": "2024-01-15",
+            "expiry_date": "2039-01-14",
+            "codes": [
+              {
+                "code": "B96",
+                "value": "4250",
+                "sign": "≤"
+              },
+              {
+                "code": "70",
+                "value": "01.01"
+              },
+              {
+                "code": "95",
+                "value": "2029-01-15"
+              },
+              {
+                "code": "96",
+                "value": "750",
+                "sign": "≤"
+              }
+            ]
+          }
+        ]
+      },
+      "exp": 1776166749
+    },
+    "credential_format": "mso_mdoc",
+    "document_type": "org.iso.18013.5.1.mDL",
+    "id": 113,
+    "title": "Drivers Licence",
+    "subtitle": ""
+  },
+  {
+    "paths": {
+      "org.iso.18013.5.1": {
+        "given_name": "Erika",
+        "family_name": "Mustermann",
+        "birth_date": "1964-08-12",
+        "age_over_18": true,
+        "document_number": "Z021AB37X13",
+        "portrait": [],
+        "signature_usual_mark": [],
+        "un_distinguishing_sign": "D",
+        "issuing_authority": "Bundesrepublik Deutschland",
+        "issue_date": "2025-04-04T11:39:09Z",
+        "expiry_date": "2026-04-14T11:39:09Z",
+        "issuing_country": "NL",
+        "driving_privileges": [
+          {
+            "vehicle_category_code": "B",
+            "issue_date": "2024-01-15",
+            "expiry_date": "2039-01-14",
+            "codes": [
+              {
+                "code": "B96",
+                "value": "4250",
+                "sign": "≤"
+              },
+              {
+                "code": "70",
+                "value": "01.01"
+              },
+              {
+                "code": "95",
+                "value": "2029-01-15"
+              },
+              {
+                "code": "96",
+                "value": "750",
+                "sign": "≤"
+              }
+            ]
+          }
+        ]
+      },
+      "exp": 1776166749
+    },
+    "credential_format": "mso_mdoc",
+    "document_type": "org.iso.18013.5.1.mDL",
+    "id": 114,
+    "title": "Drivers Licence",
+    "subtitle": ""
+  },
+  {
+    "paths": {
+      "org.iso.18013.5.1": {
+        "given_name": "Erika",
+        "family_name": "Mustermann",
+        "birth_date": "1964-08-12",
+        "age_over_18": true,
+        "document_number": "Z021AB37X13",
+        "portrait": [],
+        "signature_usual_mark": [],
+        "un_distinguishing_sign": "D",
+        "issuing_authority": "Bundesrepublik Deutschland",
+        "issue_date": "2025-04-04T11:39:09Z",
+        "expiry_date": "2026-04-14T11:39:09Z",
+        "issuing_country": "NL",
+        "driving_privileges": [
+          {
+            "vehicle_category_code": "B",
+            "issue_date": "2024-01-15",
+            "expiry_date": "2039-01-14",
+            "codes": [
+              {
+                "code": "B96",
+                "value": "4250",
+                "sign": "≤"
+              },
+              {
+                "code": "70",
+                "value": "01.01"
+              },
+              {
+                "code": "95",
+                "value": "2029-01-15"
+              },
+              {
+                "code": "96",
+                "value": "750",
+                "sign": "≤"
+              }
+            ]
+          }
+        ]
+      },
+      "exp": 1776166749
+    },
+    "credential_format": "mso_mdoc",
+    "document_type": "org.iso.18013.5.1.mDL",
+    "id": 115,
+    "title": "Drivers Licence",
+    "subtitle": ""
+  },
+  {
+    "paths": {
+      "org.iso.18013.5.1": {
+        "given_name": "Erika",
+        "family_name": "Mustermann",
+        "birth_date": "1964-08-12",
+        "age_over_18": true,
+        "document_number": "Z021AB37X13",
+        "portrait": [],
+        "signature_usual_mark": [],
+        "un_distinguishing_sign": "D",
+        "issuing_authority": "Bundesrepublik Deutschland",
+        "issue_date": "2025-04-04T11:39:09Z",
+        "expiry_date": "2026-04-14T11:39:09Z",
+        "issuing_country": "NL",
+        "driving_privileges": [
+          {
+            "vehicle_category_code": "B",
+            "issue_date": "2024-01-15",
+            "expiry_date": "2039-01-14",
+            "codes": [
+              {
+                "code": "B96",
+                "value": "4250",
+                "sign": "≤"
+              },
+              {
+                "code": "70",
+                "value": "01.01"
+              },
+              {
+                "code": "95",
+                "value": "2029-01-15"
+              },
+              {
+                "code": "96",
+                "value": "750",
+                "sign": "≤"
+              }
+            ]
+          }
+        ]
+      },
+      "exp": 1776166749
+    },
+    "credential_format": "mso_mdoc",
+    "document_type": "org.iso.18013.5.1.mDL",
+    "id": 116,
+    "title": "Drivers Licence",
+    "subtitle": ""
+  },
+  {
+    "paths": {
+      "issuance_date": "2025-04-04",
+      "expiry_date": "2026-04-14",
+      "issuing_authority": "DE",
+      "issuing_country": "DE",
+      "nbf": 1743724800,
+      "exp": 1776124800,
+      "cnf": {
+        "jwk": {
+          "kty": "EC",
+          "crv": "P-256",
+          "x": "rjy5qYO9gUZV-cS20SM7DyrECV-zVKMLTqocdwsIQfA",
+          "y": "QoVwrdMLxV5mbbspM1aUbPw3LS3XJVdQkup8HYELyRc"
+        }
+      },
+      "iss": "https://funke.animo.id",
+      "iat": 1745248990,
+      "_sd": [
+        "fbTahMz424cxeqRjjVImNYlg3MdgiBeIfVKtSg4oNxY",
+        "lNb-nFTdxGiqVGBF5KEHyO1FVogIh-dhhbgARuSkAp4",
+        "wrOqrGppGAbPjLxW36sA06PKxBHYVo9kTUMC8_RbBJk"
+      ],
+      "_sd_alg": "sha-256",
+      "health_insurance_id": "A123456780101575519DE",
+      "affiliation_country": "DE",
+      "wallet_e_prescription_code": "160.000.033.491.352.56&94c75e15e4c4dd6b50e3c18b92b4754e88fec4ab144e86a1b95df1209767978b&medication name"
+    },
+    "credential_format": "dc+sd-jwt",
+    "document_type": "https://example.eudi.ec.europa.eu/hiid/1",
+    "id": 117,
+    "title": "Health-ID",
+    "subtitle": ""
+  },
+  {
+    "paths": {
+      "issuance_date": "2025-04-04",
+      "expiry_date": "2026-04-14",
+      "issuing_authority": "DE",
+      "issuing_country": "DE",
+      "nbf": 1743724800,
+      "exp": 1776124800,
+      "cnf": {
+        "jwk": {
+          "kty": "EC",
+          "crv": "P-256",
+          "x": "MMqRCA5JI3M1vo06OEFcQqwUjxxAfG6F01vtNCiKxU4",
+          "y": "1dKuihgBc5Smj46FD79fTcEiKKNkq087aoFaWqnhTeY"
+        }
+      },
+      "iss": "https://funke.animo.id",
+      "iat": 1745248990,
+      "_sd": [
+        "-NKHdyQAOBiH8WrVdDd26IlbJCWww068jrPEzCfckoI",
+        "m_HSqRt-px-2-7HBBEsysnkbVTutRfWAZYYipUkVNwE",
+        "vgikCBfc9uHzf97FGSBJkpxm6tx8w8utKTl0XZituOc"
+      ],
+      "_sd_alg": "sha-256",
+      "health_insurance_id": "A123456780101575519DE",
+      "affiliation_country": "DE",
+      "wallet_e_prescription_code": "160.000.033.491.352.56&94c75e15e4c4dd6b50e3c18b92b4754e88fec4ab144e86a1b95df1209767978b&medication name"
+    },
+    "credential_format": "dc+sd-jwt",
+    "document_type": "https://example.eudi.ec.europa.eu/hiid/1",
+    "id": 118,
+    "title": "Health-ID",
+    "subtitle": ""
+  },
+  {
+    "paths": {
+      "issuance_date": "2025-04-04",
+      "expiry_date": "2026-04-14",
+      "issuing_authority": "DE",
+      "issuing_country": "DE",
+      "nbf": 1743724800,
+      "exp": 1776124800,
+      "cnf": {
+        "jwk": {
+          "kty": "EC",
+          "crv": "P-256",
+          "x": "VZ7Ll1lGaLP_OOrElaNPLN6UZaZz1V0JPg1eYPwZvxg",
+          "y": "M9uzVQOTB2Ki77tHKxbWJ3PfGms3cuIjswtXuDV5UX4"
+        }
+      },
+      "iss": "https://funke.animo.id",
+      "iat": 1745248990,
+      "_sd": [
+        "HxYHg9fYb3QU0YFAU3QfLle3DoZRmLFbMMBWJ-HSvuY",
+        "azEPAASBQo-IN5kpu1tEB5w1z4SP0o4IOS-I0MgPqtI",
+        "zans2Mc74vFC-vcwKy4s2z03toRmdX3njVruG3YKth4"
+      ],
+      "_sd_alg": "sha-256",
+      "health_insurance_id": "A123456780101575519DE",
+      "affiliation_country": "DE",
+      "wallet_e_prescription_code": "160.000.033.491.352.56&94c75e15e4c4dd6b50e3c18b92b4754e88fec4ab144e86a1b95df1209767978b&medication name"
+    },
+    "credential_format": "dc+sd-jwt",
+    "document_type": "https://example.eudi.ec.europa.eu/hiid/1",
+    "id": 119,
+    "title": "Health-ID",
+    "subtitle": ""
+  },
+  {
+    "paths": {
+      "issuance_date": "2025-04-04",
+      "expiry_date": "2026-04-14",
+      "issuing_authority": "DE",
+      "issuing_country": "DE",
+      "nbf": 1743724800,
+      "exp": 1776124800,
+      "cnf": {
+        "jwk": {
+          "kty": "EC",
+          "crv": "P-256",
+          "x": "MbNxUKYqDezDcz-fPJxLHQgs-IzX0rhvV_UUU58O4rY",
+          "y": "J33DaddG8_YjhP-rgRtf4s_Kq2dVyKNdk1UqZllhOWo"
+        }
+      },
+      "iss": "https://funke.animo.id",
+      "iat": 1745248990,
+      "_sd": [
+        "14sGatLw_CbX2CVrjU0FMHO04U3w49XKdmrZR6Vs9bg",
+        "M4q8MoKadcDTE8oDxvCQTmKuw8xcvQrnqovRqb8CfBE",
+        "RW5OvoQvNCI418WcdriIpPooUQ-9jORRUcV1_y2bhns"
+      ],
+      "_sd_alg": "sha-256",
+      "health_insurance_id": "A123456780101575519DE",
+      "affiliation_country": "DE",
+      "wallet_e_prescription_code": "160.000.033.491.352.56&94c75e15e4c4dd6b50e3c18b92b4754e88fec4ab144e86a1b95df1209767978b&medication name"
+    },
+    "credential_format": "dc+sd-jwt",
+    "document_type": "https://example.eudi.ec.europa.eu/hiid/1",
+    "id": 120,
+    "title": "Health-ID",
+    "subtitle": ""
+  },
+  {
+    "paths": {
+      "issuance_date": "2025-04-04",
+      "expiry_date": "2026-04-14",
+      "issuing_authority": "DE",
+      "issuing_country": "DE",
+      "nbf": 1743724800,
+      "exp": 1776124800,
+      "cnf": {
+        "jwk": {
+          "kty": "EC",
+          "crv": "P-256",
+          "x": "_m_u-pbVTGZ0PbrpjmEeKRgDnPTtSiBZnBkDkIu-pZA",
+          "y": "b7mS7CD6gRtfpMqbDbFbbgV2g_753TpaR3OeMJTtomA"
+        }
+      },
+      "iss": "https://funke.animo.id",
+      "iat": 1745248990,
+      "_sd": [
+        "OtFerZf8iaV6CPv1OHfV1nmxFVsjmaY-5rOFz02ge0U",
+        "TDg1tm-A0Vd0cFMcNbk4VGSuhGMDW3FND5Zr8eLQIWg",
+        "v2btjwVryjCNOe-hhaltndMsOEb1Kdm7GzLiF6vh_7o"
+      ],
+      "_sd_alg": "sha-256",
+      "health_insurance_id": "A123456780101575519DE",
+      "affiliation_country": "DE",
+      "wallet_e_prescription_code": "160.000.033.491.352.56&94c75e15e4c4dd6b50e3c18b92b4754e88fec4ab144e86a1b95df1209767978b&medication name"
+    },
+    "credential_format": "dc+sd-jwt",
+    "document_type": "https://example.eudi.ec.europa.eu/hiid/1",
+    "id": 121,
+    "title": "Health-ID",
+    "subtitle": ""
+  }
+]
