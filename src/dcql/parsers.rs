@@ -113,7 +113,9 @@ impl ParseCredential for UbiqueWalletDatabaseFormat {
         )
     }
 
-    fn set_debug(&self, _input: &str) {}
+    fn set_debug(&self, _input: &str) {
+        let _ = DEBUG.set(true);
+    }
 }
 
 impl ResultFormat for CMWalletDatabaseFormat {

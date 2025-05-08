@@ -21,6 +21,7 @@ use std::{any::Any, ffi::CString};
 
 use base64::Engine;
 use serde::Deserialize;
+use serde_json::Value;
 
 use crate::dcql::{
     models::{Credential, DcqlQuery, Pointer},
@@ -249,64 +250,66 @@ pub fn get_dc_request() -> Option<(usize, DcqlQuery)> {
         return None;
     };
 
-    let query = match (&provider.request, &provider.data) {
-        (Some(request), None) if request.split(".").count() != 3 => {
-            // We have a request inside a request
-            if let Ok(wrapped_request) = serde_json::from_str::<WrappedRequest>(request) {
-                let parts = wrapped_request.request.split(".").collect::<Vec<_>>();
-                if parts.len() != 3 {
-                    return_error(&format!("base64 decode failed {:?}", parts));
-                    return None;
-                }
-                let claims = base64::prelude::BASE64_URL_SAFE_NO_PAD
-                    .decode(&parts[1])
-                    .unwrap_or(Vec::new());
-                if claims.is_empty() {
-                    return_error(&format!("base64 decode failed {}", parts[1]));
-                    return None;
-                }
-                let Ok(q) = serde_json::from_slice::<OpenID4VPRequest>(&claims) else {
-                    return_error(&format!(
-                        "base64 decode failed {:?}",
-                        std::str::from_utf8(&claims)
-                    ));
-                    return None;
-                };
-                q
-            } else if let Ok(q) = serde_json::from_str::<OpenID4VPRequest>(request) {
-                q
-            } else {
-                return_error(&format!("invalid request format {request}"));
+    let query = match &provider.request {
+        Value::Object(_) => {
+            let Some(Value::String(wrapped_request)) = provider.request.get("request") else {
+                return_error(&format!("4 request object not found"));
                 return None;
-            }
-        }
-        (None, Some(data)) | (Some(data), None) if data.split(".").count() == 3 => {
-            let parts = data.split(".").collect::<Vec<_>>();
+            };
+            let parts = wrapped_request.split(".").collect::<Vec<_>>();
             if parts.len() != 3 {
-                return_error(&format!("base64 decode failed {:?}", parts));
+                return_error(&format!("!=3 1 base64 decode failed {:?}", parts));
                 return None;
             }
             let claims = base64::prelude::BASE64_URL_SAFE_NO_PAD
                 .decode(&parts[1])
                 .unwrap_or(Vec::new());
             if claims.is_empty() {
-                return_error(&format!("base64 decode failed {}", parts[1]));
+                return_error(&format!("!=3 2 base64 decode failed {}", parts[1]));
                 return None;
             }
             let Ok(q) = serde_json::from_slice::<OpenID4VPRequest>(&claims) else {
                 return_error(&format!(
-                    "base64 decode failed {:?}",
+                    "!=3 3 base64 decode failed {:?}",
                     std::str::from_utf8(&claims)
                 ));
                 return None;
             };
             q
         }
+        Value::String(s) => {
+            let mut query = s.to_string();
+            if let Ok(wrapped_request) = serde_json::from_str::<WrappedRequest>(s) {
+                let parts = wrapped_request.request.split(".").collect::<Vec<_>>();
+                if parts.len() != 3 {
+                    return_error(&format!("!=3 1 base64 decode failed {:?}", parts));
+                    return None;
+                }
+                let claims = base64::prelude::BASE64_URL_SAFE_NO_PAD
+                    .decode(&parts[1])
+                    .unwrap_or(Vec::new());
+                if claims.is_empty() {
+                    return_error(&format!("!=3 2 base64 decode failed {}", parts[1]));
+                    return None;
+                }
+                let Ok(new_query) = std::str::from_utf8(&claims) else {
+                    return_error(&format!("!=3 invalid utf8"));
+                    return None;
+                };
+                query = new_query.to_string();
+            }
+
+            let Ok(q) = serde_json::from_str::<OpenID4VPRequest>(&query) else {
+                return_error(&format!("!=3 3 failed to decode object {:?}", query));
+                return None;
+            };
+            q
+        }
         _ => {
+            return_error(&format!("4 unsupported data_type {:?}", provider.request));
             return None;
         }
     };
-
     Some((first_provider.0, query.dcql_query.clone()))
 }
 
@@ -319,14 +322,16 @@ struct DCRequests {
 #[serde(tag = "protocol")]
 pub enum Providers {
     #[serde(rename = "openid4vp")]
+    #[serde(alias = "openid4vp-v1-unsigned")]
+    #[serde(alias = "openid4vp-v1-signed")]
     OpenID4VP(DCRequest),
     #[serde(other)]
     Unknown,
 }
 #[derive(Deserialize)]
 pub struct DCRequest {
-    request: Option<String>,
-    data: Option<String>,
+    #[serde(alias = "data")]
+    request: serde_json::Value,
 }
 #[derive(Deserialize)]
 struct OpenID4VPRequest {
